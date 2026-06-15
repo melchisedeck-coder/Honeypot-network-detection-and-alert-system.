@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Alert Configuration -->
+  <div class="col-lg-6">
+    <div class="card-hp">
+      <div class="card-header"><i class="bi bi-bell-fill me-2 text-warning"></i>Alert Configuration</div>
+      <div class="p-4">
+        <form id="alertConfigForm">
+          <div class="mb-3">
+            <label class="text-muted" style="font-size:.85rem;">Notification Email</label>
+            <input type="email" id="notifyEmail" class="form-control mt-1"
+              style="background:#0d1117;color:#f0f6fc;border-color:#30363d;"
+              value="{{ config.notify_email if config and config.notify_email else '' }}"
+              placeholder="lucianmerchisedeck@gmail.com">
+          </div>
+          <div class="mb-3">
+            <label class="text-muted" style="font-size:.85rem;">Notification Phone (SMS)</label>
+            <input type="text" id="notifyPhone" class="form-control mt-1"
+              style="background:#0d1117;color:#f0f6fc;border-color:#30363d;"
+              value="{{ config.notify_phone if config and config.notify_phone else '' }}"
+              placeholder="+255612784062">
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="text-muted" style="font-size:.85rem;">Email Alert Threshold</label>
+              <input type="number" id="emailThreshold" class="form-control mt-1"
+                style="background:#0d1117;color:#f0f6fc;border-color:#30363d;"
+                value="{{ config.email_threshold if config else 3 }}" min="1" max="100">
+              <div class="text-muted mt-1" style="font-size:.75rem;">Events before sending email</div>
+            </div>
+            <div class="col-6">
+              <label class="text-muted" style="font-size:.85rem;">SMS Alert Threshold</label>
+              <input type="number" id="smsThreshold" class="form-control mt-1"
+                style="background:#0d1117;color:#f0f6fc;border-color:#30363d;"
+                value="{{ config.sms_threshold if config else 10 }}" min="1" max="100">
+              <div class="text-muted mt-1" style="font-size:.75rem;">Events before sending SMS</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="text-muted" style="font-size:.85rem;">
+              Time Window: <span id="windowLabel">{{ config.time_window_seconds if config else 300 }}s</span>
+            </label>
+            <input type="range" id="timeWindow" class="form-range mt-1"
+              min="60" max="3600" step="60"
+              value="{{ config.time_window_seconds if config else 300 }}"
+              oninput="document.getElementById('windowLabel').textContent=this.value+'s'">
+            <div class="d-flex justify-content-between text-muted" style="font-size:.72rem;">
+              <span>1 min</span><span>60 min</span>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-4">
+            <div class="col-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="emailEnabled"
+                  {{ 'checked' if not config or config.email_enabled else '' }}>
+                <label class="form-check-label text-muted small" for="emailEnabled">Email Alerts</label>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="smsEnabled"
+                  {{ 'checked' if not config or config.sms_enabled else '' }}>
+                <label class="form-check-label text-muted small" for="smsEnabled">SMS Alerts</label>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="btn w-100" style="background:#238636;color:white;" onclick="saveAlertConfig()">
+            <i class="bi bi-check-circle me-2"></i>Save Alert Settings
+          </button>
+          <p id="configMsg" class="small mt-2 mb-0 d-none text-success"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Honeypot Status & Info -->
+  <div class="col-lg-6">
+    <div class="card-hp mb-4">
+      <div class="card-header"><i class="bi bi-activity me-2 text-success"></i>Honeypot Service Status</div>
+      <div class="p-4">
+        <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom:1px solid #30363d;">
+          <span class="text-muted small">Fake Website (HTTP)</span>
+          <span style="color:#3fb950;font-size:.85rem;">● Running on port 5001</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom:1px solid #30363d;">
+          <span class="text-muted small">SSH Emulator</span>
+          <span style="color:#3fb950;font-size:.85rem;">● Running on port 2222</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom:1px solid #30363d;">
+          <span class="text-muted small">FTP Emulator</span>
+          <span style="color:#3fb950;font-size:.85rem;">● Running on port 2121</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom:1px solid #30363d;">
+          <span class="text-muted small">Database Port Emulator</span>
+          <span style="color:#3fb950;font-size:.85rem;">● Running on port 3307</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-2">
+          <span class="text-muted small">Alert Engine</span>
+          <span style="color:#3fb950;font-size:.85rem;">● Active</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security Recommendations -->
+    <div class="card-hp">
+      <div class="card-header"><i class="bi bi-shield-check me-2 text-info"></i>Security Recommendations</div>
+      <div class="p-3" style="max-height:280px;overflow-y:auto;">
+        {% for rec in recommendations %}
+        <div class="mb-3 p-3" style="background:#0d1117;border-radius:6px;border-left:3px solid
+          {{ '#f85149' if rec.priority == 'Critical' else '#d29922' if rec.priority == 'High' else '#3fb950' if rec.priority == 'Medium' else '#8b949e' }};">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <span class="fw-bold" style="font-size:.85rem;color:#f0f6fc;">{{ rec.title }}</span>
+            <span class="badge-sev badge-{{ rec.priority|lower }} ms-2">{{ rec.priority }}</span>
+          </div>
+          <div class="text-muted" style="font-size:.78rem;">{{ rec.description }}</div>
+          <div class="mt-1" style="font-size:.72rem;color:#58a6ff;">Applies to: {{ rec.attack_type }}</div>
+        </div>
+        {% endfor %}
+        {% if not recommendations %}
+        <p class="text-muted text-center py-3 small">No recommendations loaded</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function saveAlertConfig() {
+  const msg = document.getElementById("configMsg");
+  const payload = {
+    email_enabled:       document.getElementById("emailEnabled").checked,
+    sms_enabled:         document.getElementById("smsEnabled").checked,
+    email_threshold:     parseInt(document.getElementById("emailThreshold").value),
+    sms_threshold:       parseInt(document.getElementById("smsThreshold").value),
+    time_window_seconds: parseInt(document.getElementById("timeWindow").value),
+    notify_email:        document.getElementById("notifyEmail").value,
+    notify_phone:        document.getElementById("notifyPhone").value,
+  };
+
+  const res  = await fetch("/api/settings/alerts", {
+    method:  "PUT",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify(payload),
+  });
+  const data = await res.json();
+  msg.className = `small mt-2 mb-0 ${res.ok ? 'text-success' : 'text-danger'}`;
+  msg.textContent = res.ok ? "✔ Settings saved successfully!" : "✖ " + (data.error || "Save failed");
+  msg.classList.remove("d-none");
+  setTimeout(() => msg.classList.add("d-none"), 4000);
+}
+</script>
+{% endblock %}

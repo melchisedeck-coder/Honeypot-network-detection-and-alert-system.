@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block page_title %}Dashboard Overview{% endblock %}
+
+{% block extra_css %}
+<style>
+  .attack-type-badge { font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; background: #21262d; color: #58a6ff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-label"><i class="bi bi-activity me-1"></i>Attacks Today</div>
+      <div class="stat-value text-danger" id="statToday">{{ attacks_today }}</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-label"><i class="bi bi-person-badge me-1"></i>Unique Attacker IPs</div>
+      <div class="stat-value text-warning">{{ active_ips }}</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-label"><i class="bi bi-bell me-1"></i>Unresolved Alerts</div>
+      <div class="stat-value text-info">{{ unresolved_alerts }}</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-label"><i class="bi bi-database me-1"></i>Total Attacks</div>
+      <div class="stat-value text-success">{{ total_attacks }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card-hp">
+      <div class="card-header">Attack Frequency — Last 7 Days</div>
+      <div class="p-3"><canvas id="weekChart" height="90"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-hp">
+      <div class="card-header">Attack Type Distribution</div>
+      <div class="p-3"><canvas id="typeChart" height="180"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Live Feed + Service Breakdown -->
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card-hp">
+      <div class="card-header d-flex align-items-center gap-2">
+        <span class="live-dot"></span> Live Attack Feed
+        <span class="ms-auto text-muted small" id="feedCount">0 events</span>
+      </div>
+      <div class="table-responsive" style="max-height:320px;overflow-y:auto;">
+        <table class="table table-dark-hp mb-0" id="liveTable">
+          <thead>
+            <tr><th>Time</th><th>IP Address</th><th>Type</th><th>Service</th><th>Severity</th></tr>
+          </thead>
+          <tbody id="liveBody">
+            {% for a in latest_attacks %}
+            <tr>
+              <td class="text-muted">{{ a.timestamp.strftime('%H:%M:%S') if a.timestamp else '' }}</td>
+              <td><code>{{ a.attacker_ip }}</code></td>
+              <td><span class="attack-type-badge">{{ a.attack_type }}</span></td>
+              <td>{{ a.target_service }}</td>
+              <td><span class="badge-sev badge-{{ a.severity|lower }}">{{ a.severity }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-hp">
+      <div class="card-header">Attacks by Service</div>
+      <div class="p-3"><canvas id="serviceChart" height="200"></canvas></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const CHART_OPTS = {
+  plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
+  scales:  { x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+             y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } } }
+};
+
+let weekChart, typeChart, serviceChart;
+
+async function loadStats() {
+  const res  = await fetch("/api/attacks/stats");
+  const data = await res.json();
+
+  // Week chart
+  const labels = data.last_7_days.map(d => d.date.slice(5));
+  const counts = data.last_7_days.map(d => d.count);
+  if (!weekChart) {
+    weekChart = new Chart(document.getElementById("weekChart"), {
+      type: "bar",
+      data: { labels, datasets: [{ label: "Attacks", data: counts, backgroundColor: "rgba(248,81,73,0.6)", borderColor: "#f85149", borderWidth: 1, borderRadius: 4 }] },
+      options: { ...CHART_OPTS, responsive: true, plugins: { legend: { display: false } } },
+    });
+  } else {
+    weekChart.data.labels = labels;
+    weekChart.data.datasets[0].data = counts;
+    weekChart.update();
+  }
+
+  // Type donut
+  const typeLabels = Object.keys(data.by_type);
+  const typeVals   = Object.values(data.by_type);
+  if (!typeChart) {
+    typeChart = new Chart(document.getElementById("typeChart"), {
+      type: "doughnut",
+      data: { labels: typeLabels, datasets: [{ data: typeVals, backgroundColor: ["#f85149","#d29922","#58a6ff","#3fb950","#bc8cff","#79c0ff","#ffa657","#ff7b72"] }] },
+      options: { responsive: true, plugins: { legend: { position: "bottom", labels: { color: "#8b949e", font: { size: 10 } } } } },
+    });
+  }
+
+  // Service bar
+  const svcLabels = Object.keys(data.by_service);
+  const svcVals   = Object.values(data.by_service);
+  if (!serviceChart) {
+    serviceChart = new Chart(document.getElementById("serviceChart"), {
+      type: "bar",
+      data: { labels: svcLabels, datasets: [{ data: svcVals, backgroundColor: "rgba(88,166,255,0.6)", borderColor: "#58a6ff", borderWidth: 1, borderRadius: 4 }] },
+      options: { indexAxis: "y", responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } }, y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } } } },
+    });
+  }
+}
+loadStats();
+setInterval(loadStats, 30000);
+
+// ── Socket.IO Live Feed ───────────────────────────────
+const socket = io("/live");
+let eventCount = {{ latest_attacks|length }};
+
+socket.on("new_attack", (event) => {
+  eventCount++;
+  document.getElementById("feedCount").textContent = eventCount + " events";
+
+  const tbody = document.getElementById("liveBody");
+  const sevClass = { Critical:"badge-critical", High:"badge-high", Medium:"badge-medium", Low:"badge-low" }[event.severity] || "badge-low";
+  const row = `<tr>
+    <td class="text-muted">${new Date().toLocaleTimeString()}</td>
+    <td><code>${event.attacker_ip}</code></td>
+    <td><span class="attack-type-badge">${event.attack_type}</span></td>
+    <td>${event.target_service}</td>
+    <td><span class="badge-sev ${sevClass}">${event.severity}</span></td>
+  </tr>`;
+  tbody.insertAdjacentHTML("afterbegin", row);
+
+  // Keep max 100 rows in live feed
+  while (tbody.rows.length > 100) tbody.deleteRow(tbody.rows.length - 1);
+});
+</script>
+{% endblock %}

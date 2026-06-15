@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff & Faculty Login — Tanzania Eastern University</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root { --teu-blue:#003580; --teu-gold:#e8a020; }
+    body { background:#f0f4f8; min-height:100vh; display:flex; flex-direction:column; }
+    .topbar { background:var(--teu-blue); color:white; font-size:.8rem; padding:6px 0; }
+    .login-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:2rem; }
+    .login-card { background:white; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,.10); width:100%; max-width:430px; overflow:hidden; }
+    .login-card-header { background:var(--teu-blue); color:white; padding:2rem; text-align:center; }
+    .login-card-header h2 { font-size:1.25rem; font-weight:700; margin:0; }
+    .login-card-header p  { opacity:.8; font-size:.85rem; margin:.4rem 0 0; }
+    .login-card-body { padding:2rem; }
+    .form-label { font-size:.85rem; color:#555; font-weight:500; }
+    .form-control { border-radius:6px; border:1.5px solid #dde1e7; font-size:.9rem; }
+    .form-control:focus { border-color:var(--teu-blue); box-shadow:0 0 0 3px rgba(0,53,128,.12); }
+    .btn-login { background:var(--teu-blue); color:white; font-weight:600; border-radius:6px; padding:.65rem; }
+    .btn-login:hover { background:#00509e; color:white; }
+    .divider { text-align:center; color:#aaa; font-size:.8rem; margin:1rem 0; position:relative; }
+    .divider::before, .divider::after { content:''; position:absolute; top:50%; width:42%; height:1px; background:#e0e0e0; }
+    .divider::before { left:0; } .divider::after { right:0; }
+    footer { background:var(--teu-blue); color:rgba(255,255,255,.6); text-align:center; padding:12px; font-size:.78rem; }
+    .alert-danger { background:#fff0f0; border:1px solid #f5c0c0; color:#c0392b; border-radius:6px; font-size:.85rem; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="container d-flex justify-content-between">
+    <span><i class="bi bi-globe me-1"></i>teu.ac.tz</span>
+    <span><a href="/" class="text-white text-decoration-none"><i class="bi bi-house me-1"></i>Main Website</a></span>
+  </div>
+</div>
+
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-card-header">
+      <div style="width:56px;height:56px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;">
+        <i class="bi bi-shield-lock-fill" style="font-size:1.5rem;color:var(--teu-gold);"></i>
+      </div>
+      <h2>Staff & Faculty Login</h2>
+      <p>Tanzania Eastern University — Secure Access</p>
+    </div>
+
+    <div class="login-card-body">
+      {% if error %}
+      <div class="alert-danger p-3 mb-3 rounded">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/login">
+        <div class="mb-3">
+          <label class="form-label">Staff ID / Username</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+            <input type="text" name="username" class="form-control border-start-0" placeholder="e.g. john.doe or TEU-0042" autocomplete="off" required>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label d-flex justify-content-between">
+            Password
+            <a href="#" style="color:var(--teu-blue);font-size:.82rem;">Forgot password?</a>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+            <input type="password" name="password" id="pwdField" class="form-control border-start-0" placeholder="Enter your password" required>
+            <button type="button" class="input-group-text bg-light" onclick="togglePwd()"><i class="bi bi-eye" id="eyeIcon"></i></button>
+          </div>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="remember">
+          <label class="form-check-label" style="font-size:.85rem;" for="remember">Remember me on this device</label>
+        </div>
+        <button type="submit" class="btn btn-login w-100">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Sign In to Portal
+        </button>
+      </form>
+
+      <div class="divider">or</div>
+
+      <a href="/portal" class="btn btn-outline-secondary w-100" style="font-size:.88rem;">
+        <i class="bi bi-mortarboard me-2"></i>Student Portal Login
+      </a>
+
+      <p class="text-center text-muted mt-3 mb-0" style="font-size:.78rem;">
+        Need access? Contact ICT Support: <strong>ict@teu.ac.tz</strong>
+      </p>
+    </div>
+  </div>
+</div>
+
+<footer>© 2026 Tanzania Eastern University &nbsp;|&nbsp; ICT Department &nbsp;|&nbsp; Authorised Access Only</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function togglePwd() {
+  const f = document.getElementById("pwdField");
+  const i = document.getElementById("eyeIcon");
+  if (f.type === "password") { f.type = "text";  i.className = "bi bi-eye-slash"; }
+  else                       { f.type = "password"; i.className = "bi bi-eye"; }
+}
+</script>
+</body>
+</html>

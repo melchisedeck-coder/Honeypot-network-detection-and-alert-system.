@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Attacker Profiles{% endblock %}
+{% block page_title %}Attacker Profiles{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card-hp">
+      <div class="card-header">All Attacker IPs — Ranked by Risk Score</div>
+      <div class="table-responsive">
+        <table class="table table-dark-hp mb-0">
+          <thead><tr><th>IP Address</th><th>Country</th><th>Attempts</th><th>Risk Score</th><th>Last Seen</th><th>Action</th></tr></thead>
+          <tbody id="attackersBody">
+            <tr><td colspan="6" class="text-center text-muted py-4">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <!-- Attacker Detail Panel -->
+    <div class="card-hp" id="detailPanel" style="display:none;">
+      <div class="card-header" id="detailTitle">Attacker Detail</div>
+      <div class="p-3" id="detailBody"></div>
+    </div>
+    <div class="card-hp mt-3">
+      <div class="card-header">Attack Origin Map</div>
+      <div id="attackMap" style="height:280px;border-radius:0 0 8px 8px;"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+.risk-bar { height:6px; border-radius:3px; background:#21262d; }
+.risk-fill { height:6px; border-radius:3px; background: linear-gradient(90deg,#3fb950,#d29922,#f85149); }
+#attackMap .leaflet-container { background: #0d1117; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+async function loadAttackers() {
+  const res  = await fetch("/api/attackers?limit=100");
+  const data = await res.json();
+  const tbody = document.getElementById("attackersBody");
+  if (!data.data.length) { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No attackers yet</td></tr>`; return; }
+
+  tbody.innerHTML = data.data.map(p => `
+    <tr style="cursor:pointer" onclick="loadDetail('${p.attacker_ip}')">
+      <td><code>${p.attacker_ip}</code>${p.is_blacklisted?'<span class="badge bg-danger ms-1" style="font-size:0.65rem">BLOCKED</span>':''}</td>
+      <td class="text-muted">${p.country||'Unknown'}</td>
+      <td>${p.total_attempts}</td>
+      <td>
+        <div class="d-flex align-items-center gap-2">
+          <div class="risk-bar flex-grow-1"><div class="risk-fill" style="width:${Math.min(p.risk_score*10,100)}%"></div></div>
+          <span style="font-size:0.8rem;color:${p.risk_score>7?'#f85149':p.risk_score>4?'#d29922':'#3fb950'}">${p.risk_score}</span>
+        </div>
+      </td>
+      <td class="text-muted" style="font-size:0.8rem">${p.last_seen?p.last_seen.slice(0,16).replace('T',' '):'—'}</td>
+      <td>
+        ${!p.is_blacklisted?`<button class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size:0.7rem" onclick="blacklist(event,'${p.attacker_ip}')">Block</button>`:'<span class="text-danger" style="font-size:0.75rem">Blocked</span>'}
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function loadDetail(ip) {
+  const res  = await fetch(`/api/attackers/${ip}`);
+  const data = await res.json();
+  document.getElementById("detailTitle").textContent = `Profile: ${ip}`;
+  document.getElementById("detailBody").innerHTML = `
+    <div class="row g-2 mb-3">
+      <div class="col-6"><div class="stat-card p-2"><div class="stat-label">Total Attacks</div><div class="stat-value" style="font-size:1.4rem">${data.total_attempts}</div></div></div>
+      <div class="col-6"><div class="stat-card p-2"><div class="stat-label">Risk Score</div><div class="stat-value" style="font-size:1.4rem;color:${data.risk_score>7?'#f85149':data.risk_score>4?'#d29922':'#3fb950'}">${data.risk_score}</div></div></div>
+    </div>
+    <p class="text-muted small mb-1"><strong>Country:</strong> ${data.country||'Unknown'} — ${data.city||''}</p>
+    <p class="text-muted small mb-1"><strong>ISP:</strong> ${data.isp||'Unknown'}</p>
+    <p class="text-muted small mb-3"><strong>First seen:</strong> ${data.first_seen?data.first_seen.slice(0,16).replace('T',' '):'—'}</p>
+    <p class="small fw-bold mb-2">Recent Attacks</p>
+    ${(data.recent_attacks||[]).slice(0,5).map(a=>`
+      <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #30363d">
+        <span style="font-size:0.8rem;color:#58a6ff">${a.attack_type}</span>
+        <span class="text-muted" style="font-size:0.75rem">${a.timestamp?a.timestamp.slice(11,19):''}</span>
+      </div>
+    `).join('')}
+  `;
+  document.getElementById("detailPanel").style.display = "block";
+}
+
+async function blacklist(evt, ip) {
+  evt.stopPropagation();
+  if (!confirm(`Block IP ${ip}?`)) return;
+  await fetch(`/api/attackers/${ip}/blacklist`, { method: "POST" });
+  loadAttackers();
+}
+
+// Map
+const map = L.map("attackMap", { zoomControl: true, attributionControl: false }).setView([20, 0], 1);
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 18 }).addTo(map);
+
+async function loadMap() {
+  const res   = await fetch("/api/attackers/map");
+  const pins  = await res.json();
+  pins.forEach(p => {
+    if (!p.lat || !p.lng) return;
+    const color = p.risk > 7 ? "#f85149" : p.risk > 4 ? "#d29922" : "#58a6ff";
+    L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: color, color: "#fff", weight: 1, fillOpacity: 0.8 })
+      .bindPopup(`<b>${p.ip}</b><br>${p.country}, ${p.city}<br>Attempts: ${p.attempts}`)
+      .addTo(map);
+  });
+}
+
+loadAttackers();
+loadMap();
+</script>
+{% endblock %}

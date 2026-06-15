@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: honeypot_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: MERCHISEDECK
+      POSTGRES_DB: honeypot_db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d honeypot_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: honeypot_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:MERCHISEDECK@db:5432/honeypot_db
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+      - "2222:2222"
+      - "2121:2121"
+      - "3307:3307"
+    volumes:
+      - ./logs:/app/logs
+      - ./reports:/app/reports
+
+  nginx:
+    image: nginx:alpine
+    container_name: honeypot_nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/honeypot.conf:/etc/nginx/conf.d/honeypot.conf:ro
+
+volumes:
+  pg_data:

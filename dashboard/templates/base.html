@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Honeypot Dashboard{% endblock %} — KIU Tanzania</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root { --bg-main:#0d1117; --bg-card:#161b22; --border:#30363d; --text:#f0f6fc; --muted:#8b949e; --accent:#58a6ff; --danger:#f85149; --success:#3fb950; --warning:#d29922; }
+    * { box-sizing: border-box; }
+    body { background: var(--bg-main); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; }
+    /* Sidebar */
+    .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 240px; background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 1000; }
+    .sidebar-brand { padding: 1.25rem 1rem; border-bottom: 1px solid var(--border); }
+    .sidebar-brand .brand-name { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .sidebar-brand .brand-sub  { font-size: 0.72rem; color: var(--muted); }
+    .sidebar-status { padding: 0.6rem 1rem; background: #1c2e1c; border-bottom: 1px solid var(--border); font-size: 0.75rem; color: var(--success); }
+    .sidebar-nav { flex: 1; padding: 0.5rem 0; overflow-y: auto; }
+    .nav-link { display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 1rem; color: var(--muted); font-size: 0.875rem; text-decoration: none; transition: all 0.15s; border-left: 3px solid transparent; }
+    .nav-link:hover, .nav-link.active { color: var(--text); background: #21262d; border-left-color: var(--accent); }
+    .nav-link i { font-size: 1rem; width: 1.1rem; }
+    .nav-badge { margin-left: auto; background: var(--danger); color: white; border-radius: 10px; padding: 1px 7px; font-size: 0.7rem; }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--muted); }
+    /* Main content */
+    .main-content { margin-left: 240px; min-height: 100vh; }
+    .topbar { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 1.1rem; font-weight: 600; margin: 0; }
+    .page-body { padding: 1.5rem; }
+    /* Cards */
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; }
+    .stat-card .stat-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-card .stat-value { font-size: 2rem; font-weight: 700; margin-top: 0.25rem; }
+    .card-hp { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; }
+    .card-hp .card-header { background: transparent; border-bottom: 1px solid var(--border); padding: 0.875rem 1rem; font-size: 0.875rem; font-weight: 600; }
+    /* Severity badges */
+    .badge-critical { background: #3d1c1c; color: #f85149; border: 1px solid #f85149; }
+    .badge-high     { background: #2d1c0a; color: #d29922; border: 1px solid #d29922; }
+    .badge-medium   { background: #1c2a0a; color: #56d364; border: 1px solid #56d364; }
+    .badge-low      { background: #161b22; color: #8b949e; border: 1px solid #30363d; }
+    .badge-sev { border-radius: 4px; padding: 2px 8px; font-size: 0.72rem; font-weight: 600; }
+    /* Table */
+    .table-dark-hp { color: var(--text); }
+    .table-dark-hp th { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; border-color: var(--border); background: var(--bg-main); }
+    .table-dark-hp td { border-color: var(--border); font-size: 0.85rem; vertical-align: middle; }
+    .table-dark-hp tbody tr:hover { background: #21262d; }
+    /* Live dot */
+    .live-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg-main); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">🛡 UniGuard</div>
+      <div class="brand-sub">Honeypot System — KIU TZ</div>
+    </div>
+    <div class="sidebar-status">
+      <span class="live-dot me-2"></span> Honeypot: ONLINE
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"           class="nav-link {% if request.path == '/dashboard' %}active{% endif %}"><i class="bi bi-speedometer2"></i> Overview</a>
+      <a href="/dashboard/attacks"   class="nav-link {% if '/attacks' in request.path %}active{% endif %}"><i class="bi bi-activity"></i> Live Attacks</a>
+      <a href="/dashboard/attackers" class="nav-link {% if '/attackers' in request.path %}active{% endif %}"><i class="bi bi-person-badge"></i> Attackers</a>
+      <a href="/dashboard/alerts"    class="nav-link {% if '/alerts' in request.path %}active{% endif %}">
+        <i class="bi bi-bell"></i> Alerts
+        <span class="nav-badge" id="sidebarAlertCount">0</span>
+      </a>
+      <a href="/dashboard/reports"   class="nav-link {% if '/reports' in request.path %}active{% endif %}"><i class="bi bi-file-earmark-text"></i> Reports</a>
+      <a href="/dashboard/settings"  class="nav-link {% if '/settings' in request.path %}active{% endif %}"><i class="bi bi-gear"></i> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      Logged in as <strong>{{ username }}</strong><br>
+      <a href="#" onclick="logout()" class="text-danger text-decoration-none small"><i class="bi bi-box-arrow-left me-1"></i>Logout</a>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main-content">
+    <div class="topbar">
+      <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-muted small" id="lastUpdated"></span>
+        <span class="badge bg-secondary">{{ username }}</span>
+      </div>
+    </div>
+    <div class="page-body">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    // Update last-updated timestamp
+    setInterval(() => {
+      document.getElementById("lastUpdated").textContent = "Updated " + new Date().toLocaleTimeString();
+    }, 1000);
+
+    // Load unresolved alert count into sidebar badge
+    async function updateAlertBadge() {
+      try {
+        const res  = await fetch("/api/alerts?limit=1");
+        const data = await res.json();
+        const badge = document.getElementById("sidebarAlertCount");
+        if (data.total > 0) badge.textContent = data.total;
+        else badge.style.display = "none";
+      } catch {}
+    }
+    updateAlertBadge();
+    setInterval(updateAlertBadge, 30000);
+
+    async function logout() {
+      await fetch("/api/auth/logout", { method: "POST" });
+      localStorage.removeItem("hp_token");
+      window.location.href = "/login";
+    }
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

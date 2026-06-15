@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block content %}
+<!-- Generate Report -->
+<div class="card-hp mb-4">
+  <div class="card-header"><i class="bi bi-file-earmark-plus me-2"></i>Generate New Report</div>
+  <div class="p-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label class="text-muted" style="font-size:.85rem;">Report Title</label>
+        <input type="text" id="reportTitle" class="form-control mt-1"
+          style="background:#0d1117;color:#f0f6fc;border-color:#30363d;"
+          value="Honeypot Security Report — {{ '' }}" placeholder="e.g. Weekly Security Report">
+      </div>
+      <div class="col-md-3">
+        <label class="text-muted" style="font-size:.85rem;">Report Type</label>
+        <select id="reportType" class="form-select mt-1" style="background:#0d1117;color:#f0f6fc;border-color:#30363d;">
+          <option value="Daily">Daily Summary</option>
+          <option value="Weekly" selected>Weekly Report</option>
+          <option value="Monthly">Monthly Report</option>
+          <option value="Custom">Full Report</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button class="btn w-100" style="background:#238636;color:white;" onclick="generateReport()" id="genBtn">
+          <i class="bi bi-file-earmark-pdf me-2"></i>Generate PDF Report
+        </button>
+      </div>
+    </div>
+    <p id="genMsg" class="mt-2 mb-0 small d-none"></p>
+  </div>
+</div>
+
+<!-- Reports List -->
+<div class="card-hp">
+  <div class="card-header d-flex align-items-center">
+    <i class="bi bi-folder2-open me-2"></i>Generated Reports
+    <button class="btn btn-sm btn-outline-secondary ms-auto" onclick="loadReports()">
+      <i class="bi bi-arrow-clockwise"></i>
+    </button>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-dark-hp mb-0">
+      <thead>
+        <tr><th>Title</th><th>Type</th><th>Generated At</th><th>Action</th></tr>
+      </thead>
+      <tbody id="reportsBody">
+        <tr><td colspan="4" class="text-center text-muted py-4">No reports generated yet</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function generateReport() {
+  const btn   = document.getElementById("genBtn");
+  const msg   = document.getElementById("genMsg");
+  const title = document.getElementById("reportTitle").value.trim() ||
+                `Honeypot Report ${new Date().toISOString().slice(0,10)}`;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating…';
+  msg.className = "mt-2 mb-0 small text-muted";
+  msg.textContent = "Building PDF — this may take a few seconds…";
+  msg.classList.remove("d-none");
+
+  const res  = await fetch("/api/reports/generate", {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify({ title }),
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    msg.className = "mt-2 mb-0 small text-success";
+    msg.textContent = "✔ Report generated successfully!";
+    loadReports();
+  } else {
+    msg.className = "mt-2 mb-0 small text-danger";
+    msg.textContent = "✖ Failed to generate report: " + (data.error || "Unknown error");
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="bi bi-file-earmark-pdf me-2"></i>Generate PDF Report';
+}
+
+async function loadReports() {
+  const res    = await fetch("/api/reports");
+  const reports = await res.json();
+  const tbody  = document.getElementById("reportsBody");
+
+  if (!reports.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">No reports generated yet</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = reports.map(r => `
+    <tr>
+      <td>
+        <i class="bi bi-file-earmark-pdf text-danger me-2"></i>
+        ${r.title}
+      </td>
+      <td><span style="background:#21262d;color:#8b949e;border-radius:4px;padding:2px 8px;font-size:0.75rem;">${r.report_type||'Report'}</span></td>
+      <td class="text-muted">${r.generated_at ? r.generated_at.slice(0,16).replace('T',' ') : '—'}</td>
+      <td>
+        <a href="/api/reports/${r.report_id}/download"
+           class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:0.75rem;">
+          <i class="bi bi-download me-1"></i>Download
+        </a>
+      </td>
+    </tr>
+  `).join('');
+}
+
+loadReports();
+</script>
+{% endblock %}

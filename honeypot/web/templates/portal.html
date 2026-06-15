@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal — Tanzania Eastern University</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root { --teu-blue:#003580; --teu-gold:#e8a020; }
+    body { background:#f0f4f8; }
+    .portal-header { background:linear-gradient(135deg,var(--teu-blue),#00509e); color:white; padding:1rem 0; }
+    .portal-header h5 { margin:0; font-size:1rem; }
+    .card { border:none; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+    .portal-card { padding:1.25rem; transition:transform .15s; cursor:pointer; }
+    .portal-card:hover { transform:translateY(-3px); }
+    .portal-card i { font-size:2rem; }
+    .form-control:focus { border-color:var(--teu-blue); box-shadow:0 0 0 3px rgba(0,53,128,.1); }
+    .btn-teu { background:var(--teu-blue); color:white; border:none; }
+    .btn-teu:hover { background:#00509e; color:white; }
+    .notice-item { border-left:3px solid var(--teu-gold); padding:.5rem .75rem; margin-bottom:.5rem; background:white; border-radius:0 6px 6px 0; font-size:.85rem; }
+    .login-section { background:white; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,.08); padding:2rem; }
+  </style>
+</head>
+<body>
+
+<div class="portal-header">
+  <div class="container d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+      <div style="width:42px;height:42px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+        <span style="font-weight:900;color:var(--teu-gold);">TEU</span>
+      </div>
+      <div>
+        <h5>Tanzania Eastern University — Student Portal</h5>
+        <div style="font-size:.75rem;opacity:.75;">Academic Year 2025/2026</div>
+      </div>
+    </div>
+    <a href="/" class="btn btn-sm btn-outline-light"><i class="bi bi-house me-1"></i>Main Site</a>
+  </div>
+</div>
+
+<div class="container py-4">
+  <div class="row g-4">
+
+    <!-- Login Form -->
+    <div class="col-lg-4">
+      <div class="login-section">
+        <h6 class="fw-bold mb-3" style="color:var(--teu-blue);">
+          <i class="bi bi-person-circle me-2"></i>Student Login
+        </h6>
+        <form method="POST" action="/portal">
+          <div class="mb-3">
+            <label class="form-label small text-muted">Registration Number</label>
+            <input type="text" name="reg_number" class="form-control" placeholder="e.g. TEU/BCS/2023/001" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">Password</label>
+            <input type="password" name="password" class="form-control" placeholder="Your portal password" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">Date of Birth (verification)</label>
+            <input type="date" name="dob" class="form-control">
+          </div>
+          <button type="submit" class="btn btn-teu w-100">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Access My Portal
+          </button>
+          <div class="text-center mt-2">
+            <a href="#" style="color:var(--teu-blue);font-size:.82rem;">Forgot password?</a>
+            &nbsp;|&nbsp;
+            <a href="#" style="color:var(--teu-blue);font-size:.82rem;">First time login?</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Notice Board -->
+      <div class="card p-3 mt-3">
+        <h6 class="fw-bold mb-2" style="color:var(--teu-blue);">📌 Notice Board</h6>
+        <div class="notice-item"><strong>Exam Timetable:</strong> Sem 2 exams begin July 14, 2026</div>
+        <div class="notice-item"><strong>Fee Deadline:</strong> Last date for fee payment is June 30</div>
+        <div class="notice-item"><strong>Registration:</strong> 2026/2027 course reg opens Aug 1</div>
+        <div class="notice-item"><strong>Results:</strong> Sem 1 results now available</div>
+      </div>
+    </div>
+
+    <!-- Portal Services -->
+    <div class="col-lg-8">
+      <h6 class="fw-bold mb-3" style="color:var(--teu-blue);">Student Self-Service Portal</h6>
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4">
+          <div class="card portal-card text-center">
+            <i class="bi bi-file-earmark-check-fill text-primary mb-2"></i>
+            <div class="fw-bold small">My Results</div>
+            <div class="text-muted" style="font-size:.75rem;">View exam & coursework results</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="card portal-card text-center">
+            <i class="bi bi-receipt-cutoff text-success mb-2"></i>
+            <div class="fw-bold small">Fee Statement</div>
+            <div class="text-muted" style="font-size:.75rem;">View balances & pay online</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="card portal-card text-center">
+            <i class="bi bi-calendar3 text-warning mb-2"></i>
+            <div class="fw-bold small">Timetable</div>
+            <div class="text-muted" style="font-size:.75rem;">View class & exam schedule</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="card portal-card text-center">
+            <i class="bi bi-book-fill text-danger mb-2"></i>
+            <div class="fw-bold small">Course Registration</div>
+            <div class="text-muted" style="font-size:.75rem;">Register for units</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="card portal-card text-center">
+            <i class="bi bi-file-earmark-pdf-fill text-info mb-2"></i>
+            <div class="fw-bold small">Documents</div>
+            <div class="text-muted" style="font-size:.75rem;">Letters, transcripts, clearance</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="card portal-card text-center">
+            <i class="bi bi-chat-dots-fill" style="color:var(--teu-gold);font-size:2rem;" class="mb-2"></i>
+            <div class="fw-bold small mt-1">Support</div>
+            <div class="text-muted" style="font-size:.75rem;">Chat with student services</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search student DB -->
+      <div class="card p-3">
+        <h6 class="fw-bold mb-3" style="color:var(--teu-blue);">Search Student Records</h6>
+        <form method="POST" action="/portal" class="row g-2">
+          <div class="col-md-5">
+            <input type="text" name="search_name" class="form-control form-control-sm" placeholder="Student name or ID...">
+          </div>
+          <div class="col-md-4">
+            <select name="faculty" class="form-select form-select-sm">
+              <option value="">All Faculties</option>
+              <option>Computing & IT</option>
+              <option>Business Administration</option>
+              <option>Engineering</option>
+              <option>Medicine & Health</option>
+              <option>Law</option>
+              <option>Education</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-teu btn-sm w-100">
+              <i class="bi bi-search me-1"></i>Search
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="text-center py-3" style="background:var(--teu-blue);color:rgba(255,255,255,.6);font-size:.78rem;">
+  © 2026 Tanzania Eastern University Student Portal &nbsp;|&nbsp; ICT Support: ict@teu.ac.tz &nbsp;|&nbsp; Authorised Access Only
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
