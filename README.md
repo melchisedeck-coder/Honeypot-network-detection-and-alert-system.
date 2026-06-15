@@ -1,5 +1,5 @@
 # Low Interaction Honeypot — Network Attack Detection & Alert System
-**Melchisedeck Lucian Komba | BCS Final Year Project | KIU Tanzania | 2026**
+**Melchisedeck's first cyber security project 2026**
 
 ## Project Structure
 
